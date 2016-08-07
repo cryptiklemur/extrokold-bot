@@ -9,6 +9,7 @@ using System.Timers;
 using KoldBot.Configs;
 using System.IO;
 using System.Collections.Generic;
+using DiscordBot.Configuration;
 
 namespace KoldBot.Module.Kold
 {
@@ -39,18 +40,18 @@ namespace KoldBot.Module.Kold
                 await message.DeleteAsync();
             }
 
-            GlobalConfig config = _config.Get();
+            Configs.GlobalConfig config = _config.Get<Configs.GlobalConfig>();
             if (config.keys.ContainsKey(message.Author.Id))
             {
-                _messageBuffer.AddItem(channel, config.keys[message.Author.Id]);
+                await _messageBuffer.AddItem(channel, config.keys[message.Author.Id]);
 
                 return;
             }
 
-            string keyFile = "./config/keys.txt";
+            string keyFile = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\KoldBot\\keys.txt";
             if (!File.Exists(keyFile))
             {
-                _messageBuffer.AddItem(message.Channel, "Bot has ran out of keys. Tell rjdunlap or Aaron to add more.");
+                await _messageBuffer.AddItem(message.Channel, "Bot has ran out of keys. Tell rjdunlap or Aaron to add more.");
 
                 return;
             }
@@ -58,7 +59,7 @@ namespace KoldBot.Module.Kold
             List<string> keys = new List<string>(File.ReadAllLines(keyFile));
             if (keys.Count == 0)
             {
-                _messageBuffer.AddItem(message.Channel, "Bot has ran out of keys. Tell rjdunlap or Aaron to add more.");
+                await _messageBuffer.AddItem(message.Channel, "Bot has ran out of keys. Tell rjdunlap or Aaron to add more.");
                 return;
             }
 
@@ -67,32 +68,36 @@ namespace KoldBot.Module.Kold
             File.WriteAllLines(keyFile, keys.ToArray());
 
             config.keys.Add(message.Author.Id, key);
-            _config.Set(config);
+            _config.Set<Configs.GlobalConfig>(config);
 
-            _messageBuffer.AddItem(channel, config.keys[message.Author.Id]);
+            await _messageBuffer.AddItem(channel, config.keys[message.Author.Id]);
         }
 
         public async Task OnUserJoin(IGuildUser member)
         {
-            ServerConfig config = _config.Get(member.Guild);
+            Configs.ServerConfig config = _config.Get<Configs.ServerConfig>(member.Guild);
             if (config.welcomeMessage == null || config.welcomeChannel.Equals(null))
             {
                 return;
             }
+
+            IMessageChannel channel = (IMessageChannel)await _client.GetChannelAsync(config.welcomeChannel);
 
             Timer timer = new Timer(500);
             timer.Elapsed += async (object sender, ElapsedEventArgs args) =>
             {
                 timer.Stop();
 
-                IMessageChannel channel = (IMessageChannel)await _client.GetChannelAsync(config.welcomeChannel);
+                member = await member.Guild.GetUserAsync(member.Id);
+
                 string message = config.welcomeMessage;
-                message = message.Replace("{{user}}", member.Username);
+                message = message.Replace("{{user}}", member.Username ?? member.Mention);
                 message = message.Replace("{{mention}}", member.Mention);
                 message = message.Replace("{{id}}", member.Id.ToString());
 
-                _messageBuffer.AddItem(channel, message);
+                await _messageBuffer.AddItem(channel, message);
             };
+
             timer.Start();
         }
 
@@ -105,7 +110,7 @@ namespace KoldBot.Module.Kold
                 return;
             }
 
-            _messageBuffer.AddItem(message.Channel, "Pong!");
+            await _messageBuffer.AddItem(message.Channel, "Pong!");
         }
 
         [Command("welcome-channel")]
@@ -124,18 +129,18 @@ namespace KoldBot.Module.Kold
 
             if (text.Length == 0)
             {
-                _messageBuffer.AddItem(message.Channel, ":thumbsdown::skin-tone-2:");
+                await _messageBuffer.AddItem(message.Channel, ":thumbsdown::skin-tone-2:");
 
                 return;
             }
 
             IGuildChannel channel = message.Channel as IGuildChannel;
 
-            ServerConfig config = _config.Get(channel.Guild);
+            Configs.ServerConfig config = _config.Get<Configs.ServerConfig>(channel.Guild);
             config.welcomeChannel = Convert.ToUInt64(text.Replace("<#", "").Replace(">", ""));
-            _config.Set(channel.Guild, config);
+            _config.Set<Configs.ServerConfig>(channel.Guild, config);
 
-            _messageBuffer.AddItem(message.Channel, ":thumbsup::skin-tone-2:");
+            await _messageBuffer.AddItem(message.Channel, ":thumbsup::skin-tone-2:");
         }
 
         [Command("welcome-message")]
@@ -154,18 +159,18 @@ namespace KoldBot.Module.Kold
 
             if (text.Length == 0)
             {
-                _messageBuffer.AddItem(message.Channel, ":thumbsdown::skin-tone-2:");
+                await _messageBuffer.AddItem(message.Channel, ":thumbsdown::skin-tone-2:");
 
                 return;
             }
 
             IGuildChannel channel = message.Channel as IGuildChannel;
 
-            ServerConfig config = _config.Get(channel.Guild);
+            Configs.ServerConfig config = _config.Get<Configs.ServerConfig>(channel.Guild);
             config.welcomeMessage = text;
-            _config.Set(channel.Guild, config);
+            _config.Set<Configs.ServerConfig>(channel.Guild, config);
 
-            _messageBuffer.AddItem(message.Channel, ":thumbsup::skin-tone-2:");
+            await _messageBuffer.AddItem(message.Channel, ":thumbsup::skin-tone-2:");
         }
     }
 }

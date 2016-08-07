@@ -2,6 +2,7 @@
 using DiscordBot.Configuration;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,23 +13,29 @@ namespace KoldBot
     {
         private static void Main(string[] args) => new Program().Start().GetAwaiter().GetResult();
 
-        private const string configPath = "./config.json";
+        private string configPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\KoldBot\\";
 
         public async Task Start()
         {
-            if (!File.Exists(configPath))
+            string configFile = configPath + "global.json";
+
+            Directory.CreateDirectory(configPath);
+            Config config = new Config();
+            if (!File.Exists(configFile))
             {
-                File.WriteAllText(configPath, JsonConvert.SerializeObject(new Config(), Formatting.Indented));
+                config.Get();
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Please edit '{Path.GetFullPath("./config.json")}' with your settings.");
+                Console.WriteLine($"Please edit '{Path.GetFullPath(configFile)}' with your settings.");
                 Thread.Sleep(5000);
 
                 return;
             }
 
-            DiscordBot.Bot bot = new DiscordBot.Bot(JsonConvert.DeserializeObject<Config>(File.ReadAllText(configPath)));
+            GlobalConfig c = config.Get<GlobalConfig>();
 
-            bot.Container.Add(new KoldBot.Configs.Config());
+            DiscordBot.Bot bot = new DiscordBot.Bot(c);
+
+            bot.Container.Add(config);
 
             await bot.Start();
         }
