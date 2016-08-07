@@ -109,12 +109,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\DiscordBot\DiscordBot\DiscordBot.csproj">
-      <Project>{a2d4118a-a131-41f1-b6c9-cdab6ccb07ad}</Project>
-      <Name>DiscordBot</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="Discord.Net, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Discord.Net.1.0.0-dev-325\lib\netstandard1.3\Discord.Net.dll</HintPath>
       <Private>True</Private>
@@ -122,6 +116,10 @@
     <Reference Include="Discord.Net.Commands, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Discord.Net.Commands.1.0.0-dev-325\lib\netstandard1.3\Discord.Net.Commands.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="DiscordBot, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\DiscordBot\DiscordBot\bin\Release\DiscordBot.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Win32.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
